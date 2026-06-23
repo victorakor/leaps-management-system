@@ -1,4 +1,4 @@
-async function loadPage(page) {
+async function loadPage(page, el) {
   const content = document.getElementById("content");
   const pageTitle = document.getElementById("pageTitle");
 
@@ -6,7 +6,8 @@ async function loadPage(page) {
   document.querySelectorAll(".nav-item").forEach((item) => {
     item.classList.remove("active");
   });
-  event.target.closest(".nav-item").classList.add("active");
+  const navItem = el ? el.closest(".nav-item") : document.querySelector(".nav-item");
+  if (navItem) navItem.classList.add("active");
 
   try {
     switch (page) {

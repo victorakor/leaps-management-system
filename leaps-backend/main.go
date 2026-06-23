@@ -61,6 +61,11 @@ func main() {
 	// Enable CORS
 	router.Use(corsMiddleware())
 
+	// Handle OPTIONS preflight globally
+	router.OPTIONS("/*path", func(c *gin.Context) {
+		c.AbortWithStatus(204)
+	})
+
 	// Setup routes
 	routes.SetupRoutes(router, db)
 	routes.RegisterRoutes(router, db)
@@ -88,10 +93,15 @@ func main() {
 // corsMiddleware enables CORS
 func corsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := c.Request.Header.Get("Origin")
+		if origin == "" {
+			origin = "*"
+		}
+		c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Max-Age", "86400")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)

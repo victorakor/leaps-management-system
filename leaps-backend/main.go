@@ -8,6 +8,7 @@ import (
 
 	"leaps/internal/routes"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
@@ -59,12 +60,13 @@ func main() {
 	router := gin.Default()
 
 	// Enable CORS
-	router.Use(corsMiddleware())
-
-	// Handle OPTIONS preflight globally
-	router.OPTIONS("/*path", func(c *gin.Context) {
-		c.AbortWithStatus(204)
-	})
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"https://leaps.up.railway.app"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept", "X-Requested-With"},
+		AllowCredentials: true,
+		MaxAge:           86400,
+	}))
 
 	// Setup routes
 	routes.SetupRoutes(router, db)
@@ -87,27 +89,5 @@ func main() {
 	log.Printf("🚀 Starting LEAPS API server on port %s", port)
 	if err := router.Run(":" + port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
-	}
-}
-
-// corsMiddleware enables CORS
-func corsMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
-		if origin == "" {
-			origin = "*"
-		}
-		c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
-		c.Writer.Header().Set("Access-Control-Max-Age", "86400")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
 	}
 }

@@ -2,12 +2,13 @@ package controllers
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"leaps/internal/auth"
 	"leaps/pkg/response"
+
+	"github.com/gin-gonic/gin"
 )
 
 type AuthController struct {
@@ -24,13 +25,13 @@ type loginRequest struct {
 }
 
 type authUser struct {
-	ID           string `json:"id"`
-	SchoolID     string `json:"school_id"`
+	ID           int    `json:"id"`
+	SchoolID     int    `json:"school_id"`
 	FullName     string `json:"full_name"`
 	Email        string `json:"email"`
 	Phone        string `json:"phone"`
 	PasswordHash string `json:"-"`
-	RoleID       string `json:"role_id"`
+	Role         string `json:"role"`
 	IsActive     bool   `json:"is_active"`
 }
 
@@ -42,19 +43,28 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}
 
 	var user authUser
-	var role string
+	var firstName, lastName string
+	var status string
 	query := `
-		SELECT u.id, u.school_id, u.full_name, u.email, u.phone, u.password_hash, u.role_id, u.is_active, r.name
-		FROM users u
-		LEFT JOIN roles r ON u.role_id = r.id
-		WHERE u.email = $1
+		SELECT id, school_id, first_name, last_name, email, phone, password_hash, role, status
+		FROM users
+		WHERE email = $1
+		  AND deleted_at IS NULL
 	`
 	err := ac.db.QueryRow(query, req.Email).Scan(
-		&user.ID, &user.SchoolID, &user.FullName, &user.Email, &user.Phone,
-		&user.PasswordHash, &user.RoleID, &user.IsActive, &role,
+		&user.ID, &user.SchoolID, &firstName, &lastName,
+		&user.Email, &user.Phone, &user.PasswordHash, &user.Role, &status,
 	)
 	if err != nil {
 		response.Error(c, http.StatusUnauthorized, "Invalid credentials", "user not found")
+		return
+	}
+
+	user.FullName = fmt.Sprintf("%s %s", firstName, lastName)
+	user.IsActive = status == "active"
+
+	if !user.IsActive {
+		response.Error(c, http.StatusUnauthorized, "Account inactive", "user account is not active")
 		return
 	}
 
@@ -63,7 +73,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := auth.GenerateTokenRaw(user.ID, user.Email, role)
+	token, err := auth.GenerateTokenRaw(fmt.Sprintf("%d", user.ID), user.Email, user.Role)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "Token generation failed", err.Error())
 		return
@@ -77,16 +87,21 @@ func (ac *AuthController) Login(c *gin.Context) {
 
 func (ac *AuthController) Register(c *gin.Context) {
 	var req struct {
-		FullName string `json:"full_name" binding:"required"`
-		Email    string `json:"email" binding:"required,email"`
-		Phone    string `json:"phone"`
-		Password string `json:"password" binding:"required"`
-		SchoolID string `json:"school_id"`
-		RoleID   string `json:"role_id"`
+		FirstName string `json:"first_name" binding:"required"`
+		LastName  string `json:"last_name" binding:"required"`
+		Email     string `json:"email" binding:"required,email"`
+		Phone     string `json:"phone"`
+		Password  string `json:"password" binding:"required"`
+		SchoolID  int    `json:"school_id" binding:"required"`
+		Role      string `json:"role"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "Invalid request", err.Error())
 		return
+	}
+
+	if req.Role == "" {
+		req.Role = "staff"
 	}
 
 	hashedPassword, err := auth.HashPassword(req.Password)
@@ -95,18 +110,25 @@ func (ac *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	userID := uuid.New().String()
 	query := `
-		INSERT INTO users (id, school_id, full_name, email, phone, password_hash, role_id, is_active, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+		INSERT INTO users (first_name, last_name, email, phone, password_hash, role, school_id, status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', NOW(), NOW())
+		RETURNING id
 	`
-	_, err = ac.db.Exec(query, userID, req.SchoolID, req.FullName, req.Email, req.Phone, hashedPassword, req.RoleID, true)
+	var userID int
+	err = ac.db.QueryRow(query,
+		req.FirstName, req.LastName, req.Email, req.Phone,
+		hashedPassword, req.Role, req.SchoolID,
+	).Scan(&userID)
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "Registration failed", err.Error())
 		return
 	}
 
-	response.Success(c, http.StatusCreated, "User registered successfully", gin.H{"id": userID, "email": req.Email})
+	response.Success(c, http.StatusCreated, "User registered successfully", gin.H{
+		"id":    userID,
+		"email": req.Email,
+	})
 }
 
 func (ac *AuthController) GetCurrentUser(c *gin.Context) {
@@ -117,14 +139,24 @@ func (ac *AuthController) GetCurrentUser(c *gin.Context) {
 	}
 
 	var user authUser
-	query := `SELECT id, school_id, full_name, email, phone, role_id, is_active FROM users WHERE id = $1`
+	var firstName, lastName, status string
+	query := `
+		SELECT id, school_id, first_name, last_name, email, phone, role, status
+		FROM users
+		WHERE id = $1
+		  AND deleted_at IS NULL
+	`
 	err := ac.db.QueryRow(query, userID).Scan(
-		&user.ID, &user.SchoolID, &user.FullName, &user.Email, &user.Phone, &user.RoleID, &user.IsActive,
+		&user.ID, &user.SchoolID, &firstName, &lastName,
+		&user.Email, &user.Phone, &user.Role, &status,
 	)
 	if err != nil {
 		response.Error(c, http.StatusNotFound, "User not found", err.Error())
 		return
 	}
+
+	user.FullName = fmt.Sprintf("%s %s", firstName, lastName)
+	user.IsActive = status == "active"
 
 	response.Success(c, http.StatusOK, "User retrieved", user)
 }

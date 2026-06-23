@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEAPS Dashboard</title>
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="assets/css/animations.css">
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <div class="sidebar slide-in">
+            <div class="sidebar-header">
+                <h2>LEAPS</h2>
+                <p class="sidebar-subtitle">School OS</p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#" onclick="loadPage('overview')" class="nav-item active">
+                    <span class="icon">📊</span> Overview
+                </a>
+                <a href="#" onclick="loadPage('students')" class="nav-item">
+                    <span class="icon">👥</span> Students
+                </a>
+                <a href="#" onclick="loadPage('admissions')" class="nav-item">
+                    <span class="icon">📝</span> Admissions
+                </a>
+                <a href="#" onclick="loadPage('results')" class="nav-item">
+                    <span class="icon">📈</span> Results
+                </a>
+                <a href="#" onclick="loadPage('quizzes')" class="nav-item">
+                    <span class="icon">🧪</span> Quizzes
+                </a>
+                <a href="#" onclick="loadPage('finance')" class="nav-item">
+                    <span class="icon">💰</span> Finance
+                </a>
+                <a href="#" onclick="loadPage('reports')" class="nav-item">
+                    <span class="icon">📄</span> Reports
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="#" onclick="logout()" class="nav-item logout">
+                    <span class="icon">🚪</span> Logout
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <h1 id="pageTitle">Dashboard</h1>
+                </div>
+                <div class="topbar-right">
+                    <div class="user-info">
+                        <span id="userName">User</span>
+                        <img src="assets/images/avatar.png" alt="Avatar" class="avatar">
+                    </div>
+                </div>
+            </div>
+
+            <div id="content" class="content fade-in">
+                <!-- Content loaded here -->
+            </div>
+        </div>
+    </div>
+    <script>
+        window.LEAPS_API_URL = "%%LEAPS_API_URL%%";
+    </script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/router.js"></script>
+    <script src="assets/js/dashboard.js"></script>
+</body>
+</html>

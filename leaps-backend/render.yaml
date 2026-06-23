@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: leaps-api
+    env: go
+    buildCommand: go build -o leaps-api ./main.go
+    startCommand: ./leaps-api
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: leaps-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: leaps-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: leaps-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: leaps-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: leaps-db
+          property: database
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 8080
+
+databases:
+  - name: leaps-db
+    plan: free
+    databaseName: leaps_db
+    user: leaps_user

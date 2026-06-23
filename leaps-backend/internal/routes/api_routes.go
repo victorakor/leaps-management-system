@@ -3,19 +3,17 @@ package routes
 import (
 	"database/sql"
 
-	"github.com/gin-gonic/gin"
 	"leaps/internal/controllers"
 	"leaps/internal/middleware"
 	"leaps/internal/repositories"
 	"leaps/internal/services"
+
+	"github.com/gin-gonic/gin"
 )
 
-// SetupRoutes configures all API routes
 func SetupRoutes(router *gin.Engine, db *sql.DB) {
-	// Initialize repositories
 	userRepo := repositories.NewUserRepository(db)
 
-	// Initialize services
 	userService := services.NewUserService(userRepo)
 	studentService := services.NewStudentService(db)
 	resultService := services.NewResultService(db)
@@ -23,7 +21,6 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	quizService := services.NewQuizService(db)
 	financeService := services.NewFinanceService(db)
 
-	// Initialize controllers
 	userController := controllers.NewUserController(userService)
 	studentController := controllers.NewStudentController(studentService)
 	resultController := controllers.NewResultController(resultService)
@@ -31,7 +28,6 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 	quizController := controllers.NewQuizController(quizService)
 	financeController := controllers.NewFinanceController(financeService)
 
-	// Public routes
 	public := router.Group("/api")
 	{
 		// User routes
@@ -83,18 +79,16 @@ func SetupRoutes(router *gin.Engine, db *sql.DB) {
 		public.GET("/finance/summary", financeController.GetFinancialSummary)
 	}
 
-	// Protected routes (require authentication)
 	protected := router.Group("/api")
 	protected.Use(middleware.AuthMiddleware())
 	{
-		_ = protected // placeholder for future protected routes
+		_ = protected
 	}
 
-	// Admin routes (require admin role)
 	admin := router.Group("/api/admin")
 	admin.Use(middleware.AuthMiddleware())
 	admin.Use(middleware.RoleMiddleware("admin"))
 	{
-		_ = admin // placeholder for future admin routes
+		_ = admin
 	}
 }

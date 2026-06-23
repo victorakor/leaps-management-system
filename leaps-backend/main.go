@@ -14,7 +14,6 @@ import (
 )
 
 func main() {
-	// Try DATABASE_URL first (Railway/production), fall back to individual vars
 	psqlInfo := os.Getenv("DATABASE_URL")
 	if psqlInfo == "" {
 		dbHost := os.Getenv("DB_HOST")
@@ -41,14 +40,12 @@ func main() {
 			dbHost, dbPort, dbUser, dbPassword, dbName)
 	}
 
-	// Connect to database
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer db.Close()
 
-	// Test connection
 	err = db.Ping()
 	if err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
@@ -56,10 +53,8 @@ func main() {
 
 	log.Println("✅ Connected to database successfully")
 
-	// Initialize Gin router
 	router := gin.Default()
 
-	// Enable CORS
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"https://leaps.up.railway.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
@@ -68,11 +63,8 @@ func main() {
 		MaxAge:           86400,
 	}))
 
-	// Setup routes
 	routes.SetupRoutes(router, db)
-	routes.RegisterRoutes(router, db)
 
-	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":  "ok",
@@ -80,7 +72,6 @@ func main() {
 		})
 	})
 
-	// Start server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

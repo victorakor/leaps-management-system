@@ -1,4 +1,4 @@
-const API_BASE = window.LEAPS_API_URL || "http://localhost:8080/api";
+const API_BASE = "https://leaps-management-system-production.up.railway.app/api";
 
 function getToken() {
   return localStorage.getItem("token");

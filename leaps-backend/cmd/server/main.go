@@ -14,6 +14,7 @@ import (
 )
 
 func main() {
+	// all set
 	godotenv.Load()
 
 	db, err := config.InitDB()

@@ -64,6 +64,7 @@ func main() {
 	}))
 
 	routes.SetupRoutes(router, db)
+	routes.RegisterRoutes(router, db)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{

@@ -57,14 +57,14 @@ const StudentsAPI = {
 const AdmissionsAPI = {
   apply: (application) => request("/admissions/apply", "POST", application),
   getAll: () => request("/admissions"),
-  schedule: (appointment) => request("/admissions/schedule", "POST", appointment),
+  schedule: (appointment) => request("/admissions/schedule-interview", "POST", appointment),
   approve: (id) => request(`/admissions/${id}/approve`, "POST"),
   reject: (id) => request(`/admissions/${id}/reject`, "POST"),
 };
 
 // Results API
 const ResultsAPI = {
-  submitScores: (scores) => request("/scores/submit", "POST", scores),
+  submitScores: (scores) => request("/results/scores", "POST", scores),
   getStudentResults: (studentId) => request(`/results/student/${studentId}`),
   publish: (resultId) => request("/results/publish", "POST", { result_id: resultId }),
   lock: (resultId) => request("/results/lock", "POST", { result_id: resultId }),

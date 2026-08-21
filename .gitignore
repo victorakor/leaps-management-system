@@ -1,0 +1,28 @@
+# Secrets and local configuration. Never commit the real .env --
+# copy .env.example and fill it in locally instead.
+.env
+.env.local
+*.env
+!.env.example
+
+# Go build output
+leaps-backend/leaps-backend
+leaps-backend/server
+*.exe
+*.test
+*.out
+
+# Uploaded files and generated reports
+leaps-backend/storage/
+*.pdf
+
+# Dependencies
+vendor/
+node_modules/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
